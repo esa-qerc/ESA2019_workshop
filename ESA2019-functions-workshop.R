@@ -16,9 +16,12 @@ predictors <- data.frame(
 
 # simulate some species-level associations with covariates
 n_covariates <- ncol(predictors)
-covariate_effects <- matrix(rnorm(n_species * n_covariates, mean = 0, sd = (1 / apply(predictors, 2, mean))),
-                            nrow = n_covariates,
-                            ncol = n_species)
+covariate_effects <- matrix(
+  rnorm(n_species * n_covariates,
+        mean = 0, sd = (1 / apply(predictors, 2, mean))),
+  nrow = n_covariates,
+  ncol = n_species
+)
 
 # we can use these to create a `linear_predictor` that gives the mean
 #   probability of occurrence for each species at each site (assuming
@@ -59,29 +62,50 @@ data_set <- data.frame(
 )
 
 # fit a GLM model for the first species
-model_sp1 <- glm(occ_sp1 ~ temperature_std + precipitation_std + tree_cover_std + flowering_std,
-                 data = data_set,
-                 family = binomial())
+model_sp1 <- glm(
+  occ_sp1 ~ temperature_std +
+    precipitation_std +
+    tree_cover_std +
+    flowering_std,
+  data = data_set,
+  family = binomial()
+)
 
 # repeat for species 2 and 3
-model_sp2 <- glm(occ_sp2 ~ temperature_std + precipitation_std + tree_cover_std + flowering_std,
-                 data = data_set,
-                 family = binomial())
-model_sp3 <- glm(occ_sp3 ~ temperature_std + precipitation_std + tree_cover_std + flowering_std,
-                 data = data_set,
-                 family = binomial())
+model_sp2 <- glm(
+  occ_sp2 ~ temperature_std + 
+    precipitation_std +
+    tree_cover_std +
+    flowering_std,
+  data = data_set,
+  family = binomial()
+)
+model_sp3 <- glm(
+  occ_sp3 ~ temperature_std + 
+    precipitation_std + 
+    tree_cover_std + 
+    flowering_std,
+  data = data_set,
+  family = binomial()
+)
 
-# now we can make some plots of occurrence probabilities against predictors
+# let's assume the models are fitted perfectly and we don't need 
+#   to look at model diagnostics. Then we can use these perfect
+#   models to make some plots of occurrence probabilities against
+#   predictors
 
 # how many values should we use to draw our fitted association?
 n_plot <- 100
 
-# we need a sequence of predictor values (temperature, here) so we can predict
-#   occurrence probabilities along a gradient
-temp_seq <- seq(min(data_set$temperature_std), max(data_set$temperature_std), length = n_plot)
+# we need a sequence of predictor values (temperature in this case)
+#   so we can predict occurrence probabilities along a gradient
+temp_seq <- seq(min(data_set$temperature_std),
+                max(data_set$temperature_std),
+                length = n_plot)
 
-# now we make a new data.frame, with the predictor sequence add for the variable
-#   of interest, and zeros otherwise (holding all other predictors at their mean)
+# now we make a new data.frame, with the predictor sequence used
+#   for the variable of interest, and zeros otherwise
+#   (holding all other predictors at their mean)
 plot_data <- data.frame(
   temperature_std = temp_seq,
   precipitation_std = rep(0, n_plot),
@@ -89,20 +113,22 @@ plot_data <- data.frame(
   flowering_std = rep(0, n_plot)
 )
 
-# we can use this new data.frame to predict the probability of occurrence at
-#   each value along the predictor sequence
+# we can use this new data.frame to predict the probability of
+#   occurrence at each value along the predictor sequence
 plot_values <- predict(model_sp1, newdata = plot_data, type = "response")
 
 # now plot it
 plot(plot_values ~ temp_seq, type = "l")
 
 # there's a few things we might want to fix with this plot:
-#   1. the x-axis has the standardised values but ideally would have the true temperature values
+#   1. the x-axis has the standardised values but ideally would
+#        have the true temperature values
 #   2. we could add some informative axis labels
 #   3. we could make some formatting changes based on our own preferences
 
 # change the axis range
-temp_actual <- temp_seq * sd(data_set$temperature_c) + mean(data_set$temperature_c)
+temp_actual <- temp_seq * sd(data_set$temperature_c) +
+  mean(data_set$temperature_c)
 plot(plot_values ~ temp_actual, type = "l")
 
 # change the axis labels
@@ -128,15 +154,28 @@ mtext("Species 1", side = 3, line = 0.5, adj = 0.02, cex = 1.5)
 #   predictors and species
 
 # let's start with precipitation for species 1
+#    (note: using almost the same code as above)
+# generate a sequence of precipitation values
 precip_seq <- seq(min(data_set$precipitation_std), max(data_set$precipitation_std), length = n_plot)
+
+# create a new data.frame with this precipitation sequence,
+#   holding all other variables at zero (their mean)
 plot_data <- data.frame(
   temperature_std = rep(0, n_plot),
   precipitation_std = precip_seq,
   tree_cover_std = rep(0, n_plot),
   flowering_std = rep(0, n_plot)
 )
+
+# predict occurrence probabilities at each value of precipitation
 plot_values <- predict(model_sp1, newdata = plot_data, type = "response")
-precip_actual <- precip_seq * sd(data_set$precipitation_mm) + mean(data_set$precipitation_mm)
+
+# rescale the x-axis values to be actual precipitation rather than
+#   standardised values
+precip_actual <- precip_seq * sd(data_set$precipitation_mm) +
+  mean(data_set$precipitation_mm)
+
+# plot it, with your preferred plot settings
 plot(plot_values ~ precip_actual,
      type = "l",
      bty = "l",
@@ -146,11 +185,12 @@ plot(plot_values ~ precip_actual,
      xlab = "Precipitation (mm)",
      ylab = "Probabiliy of occurrence")
 
-# could even add a label to the plot
+# add a label
 mtext("Species 1", side = 3, line = 0.5, adj = 0.02, cex = 1.5)
 
-# what about species 2?
-# let's start with precipitation for species 1
+# what if we want to plot precipitation for species 2?
+
+# repeat the above code, swapping out species 1 for species 2
 precip_seq <- seq(min(data_set$precipitation_std), max(data_set$precipitation_std), length = n_plot)
 plot_data <- data.frame(
   temperature_std = rep(0, n_plot),
@@ -168,9 +208,8 @@ plot(plot_values ~ precip_actual,
      ylim = c(0, 1),
      xlab = "Precipitation (mm)",
      ylab = "Probabiliy of occurrence")
-
-# could even add a label to the plot
 mtext("Species 2", side = 3, line = 0.5, adj = 0.02, cex = 1.5)
 
-# great, but this seems like a tedious amount of copy-paste if we want to plot
-#   three species by four predictors. What if we had more species?
+# great, but this seems like a huge amount of copy-paste and a lot of
+#   opportunities for mistakes if we want to plot three species by
+#   four predictors. What if we had more species or more predictors?
